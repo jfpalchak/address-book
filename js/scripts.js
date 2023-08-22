@@ -34,11 +34,23 @@ function Contact(firstName, lastName, phoneNumber) {
   this.firstName = firstName;
   this.lastName = lastName;
   this.phoneNumber = phoneNumber;
+  this.addresses = {};
 }
 
 Contact.prototype.fullName = function() {
   return this.firstName + " " + this.lastName;
 };
+
+Contact.prototype.addAddress = function(addressObject) {
+  this.addresses[addressObject.type] = addressObject.address;
+};
+
+// Business Logic for Address ---------
+function Address(type, value) {
+  this.type = type;
+  this.address = value;
+}
+
 
 // User Interface Logic ---------
 let epicodusRoster = new AddressBook();
@@ -69,10 +81,14 @@ function displayContactDetails(event){
   document.querySelector(".last-name").innerText = contactLastName;
   document.querySelector(".phone-number").innerText = contactPhoneNumber;
 
+  document.querySelector("form.new-address").setAttribute("id", event.target.id);
   document.querySelector("button.delete").setAttribute("id", event.target.id);
 
   document.getElementById("contact-details").removeAttribute("class");
+
+  displayContactAddress(contactToDisplay);
 }
+
 
 function handleFormSubmission(event) {
   event.preventDefault();
@@ -81,7 +97,6 @@ function handleFormSubmission(event) {
   const inputtedPhoneNumber = document.querySelector("input#new-phone-number").value;
   let studentOne = new Contact(inputtedFirstName, inputtedLastName, inputtedPhoneNumber);
   epicodusRoster.addContact(studentOne);
-  console.log(epicodusRoster.contacts);
   listContacts(epicodusRoster);
 
   document.getElementById("new-first-name").value = null;
@@ -99,8 +114,37 @@ function handleDelete(event) {
   listContacts(epicodusRoster);
 }
 
+function handleAddressFormSubmission(event) {
+  event.preventDefault();
+
+  const addressType = document.getElementById("new-address-type").value;
+  const addressValue = document.getElementById("new-contact-address").value;
+
+  const newAddressObject = new Address(addressType, addressValue);
+
+  const contactToUpdate = epicodusRoster.findContact(event.target.id);
+
+  contactToUpdate.addAddress(newAddressObject);
+
+  displayContactAddress(contactToUpdate);
+  document.getElementById("new-address-type").value = null;
+  document.getElementById("new-contact-address").value = null;
+}
+
+function displayContactAddress(contactObject) {
+  document.querySelector(".addresses").innerText = null;
+  let ulElement = document.createElement("ul");
+  Object.keys(contactObject.addresses).forEach(function(key){
+    let liElement = document.createElement("li");
+    liElement.append(key + ": " + contactObject.addresses[key]);
+    ulElement.append(liElement);
+  });
+  document.querySelector(".addresses").append(ulElement);
+}
+
 window.addEventListener("load", function (){
   document.querySelector("form#new-contact").addEventListener("submit", handleFormSubmission);
   document.querySelector("div#contacts").addEventListener("click", displayContactDetails);
+  document.querySelector("form.new-address").addEventListener("submit", handleAddressFormSubmission);
   document.querySelector("button.delete").addEventListener("click", handleDelete);
 });
